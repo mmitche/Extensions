@@ -106,6 +106,15 @@ stages:
           inputs:
             command: custom
             arguments: 'locals all -clear'
+        - ${{ if ne(variables['System.TeamProject'], 'public') }}:
+          - task: PowerShell@2
+            displayName: Setup Private Feeds Credentials
+            condition: eq(variables['Agent.OS'], 'Windows_NT')
+            inputs:
+              filePath: $(Build.SourcesDirectory)/eng/common/SetupNugetSources.ps1
+              arguments: -ConfigFile $(Build.SourcesDirectory)/NuGet.config -Password $Env:Token
+            env:
+              Token: $(dn-bot-dnceng-artifact-feeds-rw)
         - script: eng\common\cibuild.cmd -configuration $(_BuildConfig) -prepareMachine $(_BuildArgs)
           displayName: Build and Publish
         - script: eng\scripts\ci-flaky-tests.cmd -configuration $(_BuildConfig)
@@ -171,6 +180,15 @@ stages:
           displayName: Install Node 10.x
           inputs:
             versionSpec: 10.x
+        - ${{ if ne(variables['System.TeamProject'], 'public') }}:
+          - task: Bash@3
+            displayName: Setup Private Feeds Credentials
+            inputs:
+              filePath: $(Build.SourcesDirectory)/eng/common/SetupNugetSources.sh
+              arguments: $(Build.SourcesDirectory)/NuGet.config $Token
+            condition: ne(variables['Agent.OS'], 'Windows_NT')
+            env:
+              Token: $(dn-bot-dnceng-artifact-feeds-rw)
         - script: eng/common/cibuild.sh
             --configuration $(_BuildConfig)
             --prepareMachine
@@ -227,6 +245,15 @@ stages:
         steps:
         - checkout: self
           clean: true
+        - ${{ if ne(variables['System.TeamProject'], 'public') }}:
+          - task: Bash@3
+            displayName: Setup Private Feeds Credentials
+            inputs:
+              filePath: $(Build.SourcesDirectory)/eng/common/SetupNugetSources.sh
+              arguments: $(Build.SourcesDirectory)/NuGet.config $Token
+            condition: ne(variables['Agent.OS'], 'Windows_NT')
+            env:
+              Token: $(dn-bot-dnceng-artifact-feeds-rw)
         - script: eng/common/cibuild.sh
             --configuration $(_BuildConfig)
             --prepareMachine
@@ -263,6 +290,15 @@ stages:
       DotNetCoreSdkDir: $(Agent.ToolsDirectory)/dotnet
       DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: true
     steps:
+    - ${{ if ne(variables['System.TeamProject'], 'public') }}:
+      - task: Bash@3
+        displayName: Setup Private Feeds Credentials
+        inputs:
+          filePath: $(Build.SourcesDirectory)/eng/common/SetupNugetSources.sh
+          arguments: $(Build.SourcesDirectory)/NuGet.config $Token
+        condition: ne(variables['Agent.OS'], 'Windows_NT')
+        env:
+          Token: $(dn-bot-dnceng-artifact-feeds-rw)
     - script: |
         source eng/common/native/common-library.sh
         mkdir -p $HOME/bin
