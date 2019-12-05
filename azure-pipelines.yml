@@ -37,6 +37,14 @@ stages:
     pool:
       vmImage: vs2017-win2016
     steps:
+    - ${{ if ne(variables['System.TeamProject'], 'public') }}:
+      - task: PowerShell@2
+        displayName: Setup Private Feeds Credentials
+        inputs:
+          filePath: $(Build.SourcesDirectory)/eng/common/SetupNugetSources.ps1
+          arguments: -ConfigFile $(Build.SourcesDirectory)/NuGet.config -Password $Env:Token
+        env:
+          Token: $(dn-bot-dnceng-artifact-feeds-rw)
     - powershell: . ./activate.ps1; ./restore.cmd -ci; ./eng/scripts/CodeCheck.ps1 -ci
       displayName: Run eng/scripts/CodeCheck.ps1
 
